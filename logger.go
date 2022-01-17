@@ -31,7 +31,7 @@ func (this *consoleLogger) Error(format string, args ...interface{}) {
 var logger Logger
 
 func enablePrintln() bool {
-	return logger == nil
+	return logger != nil
 }
 
 func printInfo(format string, args ...interface{}) {

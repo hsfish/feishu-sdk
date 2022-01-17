@@ -23,22 +23,6 @@ func init() {
 	t.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 }
 
-type result interface {
-	Verify() error
-}
-
-type baseResponse struct {
-	Code int64  `json:"code"`
-	Msg  string `json:"msg"`
-}
-
-func (this *baseResponse) Verify() error {
-	if this.Code != 0 {
-		return fmt.Errorf("code:%d  message:%s", this.Code, this.Msg)
-	}
-	return nil
-}
-
 type sdk struct {
 	appId       string
 	appSecret   string
@@ -46,13 +30,16 @@ type sdk struct {
 	contentType string
 }
 
-func buildSdk(appId, appSecret string, provider Provider) *sdk {
-	return &sdk{
+func BuildSdk(appId, appSecret string, opts ...Options) *sdk {
+	c := &sdk{
 		appId:       appId,
 		appSecret:   appSecret,
-		provider:    provider,
 		contentType: "application/json; charset=utf-8",
 	}
+	for i := range opts {
+		opts[i](c)
+	}
+	return c
 }
 
 func (this *sdk) formatRawQuery(rawQuery map[string]interface{}) string {
@@ -78,7 +65,7 @@ func (this *sdk) Post(api string, body interface{}, r result) ([]byte, error) {
 	return this.send(http.MethodPost, api, nil, body, r)
 }
 
-func (this *sdk) GetWithAuth(api string, rawQuery map[string]interface{}, r result) ([]byte, error) {
+func (this *sdk) GetWithAuth(api string, rawQuery map[string]interface{}, body interface{}, r result) ([]byte, error) {
 	if len(rawQuery) > 0 {
 		if strings.Contains(api, "?") {
 			api += "&" + this.formatRawQuery(rawQuery)
@@ -90,7 +77,22 @@ func (this *sdk) GetWithAuth(api string, rawQuery map[string]interface{}, r resu
 	if err != nil {
 		return nil, err
 	}
-	return this.send(http.MethodGet, api, header, nil, r)
+	return this.send(http.MethodGet, api, header, body, r)
+}
+
+func (this *sdk) PostWithAuth(api string, rawQuery map[string]interface{}, body interface{}, r result) ([]byte, error) {
+	if len(rawQuery) > 0 {
+		if strings.Contains(api, "?") {
+			api += "&" + this.formatRawQuery(rawQuery)
+		} else {
+			api += "?" + this.formatRawQuery(rawQuery)
+		}
+	}
+	header, err := this.getTokenHeader()
+	if err != nil {
+		return nil, err
+	}
+	return this.send(http.MethodPost, api, header, body, r)
 }
 
 func (this *sdk) getTokenHeader() (map[string]string, error) {
@@ -138,7 +140,7 @@ func (this *sdk) send(method string, api string, header map[string]string, body 
 		start := time.Now()
 		printInfo("[%d] send from '%s', api: '%s', method: '%s', header: '%s' body: '%s'", start.UnixNano(), this.appId, api, method, jsonUtil.MustMarshalToString(header), jsonUtil.MustMarshalToString(body))
 		defer func() {
-			printInfo("[%d] recv from '%s', api: '%s', ttl: '%s', err: '%v', body: '%s'", start.UnixNano(), this.appId, api, method, time.Since(start), err, string(buf))
+			printInfo("[%d] recv from '%s', ttl: '%s', err: '%v', body: '%s'", start.UnixNano(), this.appId, time.Since(start), err, string(buf))
 		}()
 	}
 
