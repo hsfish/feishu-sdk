@@ -4,33 +4,32 @@ import (
 	"bytes"
 	"crypto/tls"
 	"fmt"
-	jsoniter "github.com/json-iterator/go"
-	"github.com/modern-go/reflect2"
+	"hsfish/feishu-sdk/util/jsonUtil"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
+	"reflect"
 	"strings"
 	"time"
+
+	jsoniter "github.com/json-iterator/go"
+	"github.com/modern-go/reflect2"
 )
 
 func init() {
 	http.DefaultClient.Timeout = time.Second * 30
-	t := http.DefaultClient.Transport.(*http.Transport)
+	t := http.DefaultTransport.(*http.Transport)
 	t.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 }
 
-type sdk struct {
-	appId     string
-	appSecret string
-}
-
-type Response interface {
+type result interface {
 	Verify() error
 }
 
 type baseResponse struct {
 	Code int64  `json:"code"`
-	Msg  string `json:"message"`
+	Msg  string `json:"msg"`
 }
 
 func (this *baseResponse) Verify() error {
@@ -40,53 +39,145 @@ func (this *baseResponse) Verify() error {
 	return nil
 }
 
-func (this *sdk) send(method string, api string, header map[string]string, body interface{}, resp Response) ([]byte, error) {
-	var r io.Reader
-	if reflect2.IsNil(body) {
+type sdk struct {
+	appId       string
+	appSecret   string
+	provider    Provider
+	contentType string
+}
+
+func buildSdk(appId, appSecret string, provider Provider) *sdk {
+	return &sdk{
+		appId:       appId,
+		appSecret:   appSecret,
+		provider:    provider,
+		contentType: "application/json; charset=utf-8",
+	}
+}
+
+func (this *sdk) formatRawQuery(rawQuery map[string]interface{}) string {
+	rv := url.Values{}
+	for k, v := range rawQuery {
+		reflectVal := reflect.ValueOf(v)
+		if kind := reflectVal.Kind(); kind != reflect.Array && kind != reflect.Slice {
+			rv.Add(k, fmt.Sprintf("%v", v))
+			continue
+		}
+		if n := reflectVal.Len(); n > 0 {
+			for i := 0; i < n; i++ {
+				rv.Add(k, fmt.Sprintf("%v", reflectVal.Index(i).Interface()))
+			}
+		} else {
+			rv.Add(k, "")
+		}
+	}
+	return rv.Encode()
+}
+
+func (this *sdk) Post(api string, body interface{}, r result) ([]byte, error) {
+	return this.send(http.MethodPost, api, nil, body, r)
+}
+
+func (this *sdk) GetWithAuth(api string, rawQuery map[string]interface{}, r result) ([]byte, error) {
+	if len(rawQuery) > 0 {
+		if strings.Contains(api, "?") {
+			api += "&" + this.formatRawQuery(rawQuery)
+		} else {
+			api += "?" + this.formatRawQuery(rawQuery)
+		}
+	}
+	header, err := this.getTokenHeader()
+	if err != nil {
+		return nil, err
+	}
+	return this.send(http.MethodGet, api, header, nil, r)
+}
+
+func (this *sdk) getTokenHeader() (map[string]string, error) {
+	// 从缓存获取
+	token := tokenStorage.Get(this.appId)
+	if token == "" {
+		// 重新产生
+		if t, err := this.CreateToken(); err != nil {
+			return nil, err
+		} else {
+			token = t.AccessToken
+		}
+	}
+	return map[string]string{"Authorization": "Bearer " + token}, nil
+}
+
+func (this *sdk) formatRequestBody(body interface{}) (io.Reader, error) {
+	var reader io.Reader
+	if !reflect2.IsNil(body) {
 		switch d := body.(type) {
 		case string:
-			r = strings.NewReader(d)
+			reader = strings.NewReader(d)
 		case []byte:
-			r = bytes.NewBuffer(d)
+			reader = bytes.NewBuffer(d)
 		case io.Reader:
-			r = d
+			reader = d
 		default:
-			if b, err := jsoniter.Marshal(d); err != nil {
-				return nil, err
+			if b, err := jsoniter.Marshal(d); err == nil {
+				reader = bytes.NewReader(b)
 			} else {
-				r = bytes.NewReader(b)
+				return nil, err
 			}
 		}
 	}
+	return reader, nil
+}
 
-	req, err := http.NewRequest(method, api, r)
+func (this *sdk) send(method string, api string, header map[string]string, body interface{}, r result) (buf []byte, err error) {
+	reqBody, err := this.formatRequestBody(body)
+	if err != nil {
+		return nil, err
+	}
+
+	if enablePrintln() {
+		start := time.Now()
+		printInfo("[%d] send from '%s', api: '%s', method: '%s', header: '%s' body: '%s'", start.UnixNano(), this.appId, api, method, jsonUtil.MustMarshalToString(header), jsonUtil.MustMarshalToString(body))
+		defer func() {
+			printInfo("[%d] recv from '%s', api: '%s', ttl: '%s', err: '%v', body: '%s'", start.UnixNano(), this.appId, api, method, time.Since(start), err, string(buf))
+		}()
+	}
+
+	req, err := http.NewRequest(method, api, reqBody)
 	if err != nil {
 		return nil, err
 	}
 	for k, v := range header {
 		req.Header.Add(k, v)
 	}
+	if req.Header.Get("Content-Type") == "" {
+		req.Header.Set("Content-Type", this.contentType)
+	}
+
 	response, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, err
+		return
 	}
 	defer response.Body.Close()
 
-	if response.StatusCode != http.StatusSeeOther {
-		return nil, fmt.Errorf(response.Status)
-	}
-	b, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return nil, err
+	if response.StatusCode != http.StatusOK {
+		err = fmt.Errorf(response.Status)
+		return
 	}
 
-	if reflect2.IsNil(resp) {
-		if err = jsoniter.Unmarshal(b, resp); err != nil {
-			return nil, err
+	if buf, err = ioutil.ReadAll(response.Body); err == nil && !reflect2.IsNil(r) {
+		if err = jsoniter.Unmarshal(buf, r); err == nil {
+			err = r.Verify()
 		}
-		return b, resp.Verify()
 	}
+	return
+}
 
-	return b, nil
+func (this *sdk) CreateToken() (*AccessToken, error) {
 
+	if t, err := this.provider.CreateToken(); err != nil {
+		return nil, err
+	} else {
+		tokenStorage.Set(this.appId, t.AccessToken, t.Expired)
+		return t, nil
+	}
 }
