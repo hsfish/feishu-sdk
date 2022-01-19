@@ -42,6 +42,10 @@ func BuildSdk(appId, appSecret string, opts ...Options) *sdk {
 	return c
 }
 
+func (this *sdk) GetAppId() string {
+	return this.appId
+}
+
 func (this *sdk) formatRawQuery(rawQuery map[string]interface{}) string {
 	rv := url.Values{}
 	for k, v := range rawQuery {
@@ -96,15 +100,10 @@ func (this *sdk) PostWithAuth(api string, rawQuery map[string]interface{}, body 
 }
 
 func (this *sdk) getTokenHeader() (map[string]string, error) {
-	// 从缓存获取
-	token := tokenStorage.Get(this.appId)
-	if token == "" {
-		// 重新产生
-		if t, err := this.CreateToken(); err != nil {
-			return nil, err
-		} else {
-			token = t.AccessToken
-		}
+
+	token, err := this.GenToken()
+	if err != nil {
+		return nil, err
 	}
 	return map[string]string{"Authorization": "Bearer " + token}, nil
 }
@@ -172,14 +171,4 @@ func (this *sdk) send(method string, api string, header map[string]string, body 
 		}
 	}
 	return
-}
-
-func (this *sdk) CreateToken() (*AccessToken, error) {
-
-	if t, err := this.provider.CreateToken(); err != nil {
-		return nil, err
-	} else {
-		tokenStorage.Set(this.appId, t.AccessToken, t.Expired)
-		return t, nil
-	}
 }

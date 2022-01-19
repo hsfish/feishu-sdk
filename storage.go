@@ -23,19 +23,20 @@ type memoryStorage struct {
 func (this *memoryStorage) Set(appId, accessToken string, expired int64) {
 	this.data.Store(appId, &storageUnit{
 		token:   accessToken,
-		expired: time.Now().Add(time.Duration(expired-100) * time.Second),
+		expired: time.Now().Add(time.Duration(expired) * time.Second).Unix(),
 	})
 }
 
 func (this *memoryStorage) Get(appId string) string {
-	unit, ok := this.data.Load(appId)
-	if ok && unit.(*storageUnit).expired.Before(time.Now()) {
-		return unit.(*storageUnit).token
+	if unit, ok := this.data.Load(appId); ok {
+		if su := unit.(*storageUnit); su.expired-time.Now().Unix() > 10 {
+			return su.token
+		}
 	}
 	return ""
 }
 
 type storageUnit struct {
 	token   string
-	expired time.Time
+	expired int64
 }

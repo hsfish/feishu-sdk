@@ -23,7 +23,7 @@ type UserIdDetail struct {
 	Email  string `json:"email"`   //邮箱，通过邮箱查询时返回
 }
 
-func (this *sdk) BatchGetUserId(emails []string, mobiles []string, idType ...UserIdType) (*BatchGetUserIdResponse, error) {
+func (this *sdk) UserBatchGetId(emails []string, mobiles []string, idType ...UserIdType) (*BatchGetUserIdResponse, error) {
 	resp := &baseResultWithData{Data: &BatchGetUserIdResponse{}}
 
 	if _, err := this.PostWithAuth(api_User_Batch_Get_Id_V3, map[string]interface{}{
@@ -36,4 +36,24 @@ func (this *sdk) BatchGetUserId(emails []string, mobiles []string, idType ...Use
 	}
 
 	return resp.Data.(*BatchGetUserIdResponse), nil
+}
+
+type UserIdArgs struct {
+	DepartmentIds []string `json:"department_ids"`
+	OpenIds       []string `json:"open_ids"`
+	UserIds       []string `json:"user_ids"`
+}
+
+func (this *UserIdArgs) GetData() map[string]interface{} {
+	args := make(map[string]interface{}, 3)
+	if len(this.DepartmentIds) != 0 {
+		args["department_ids"] = this.DepartmentIds
+	}
+	if len(this.OpenIds) != 0 {
+		args["open_ids"] = this.OpenIds
+	}
+	if len(this.UserIds) != 0 {
+		args["user_ids"] = this.UserIds
+	}
+	return args
 }
