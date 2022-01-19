@@ -11,6 +11,8 @@ const (
 	UserIdType_Open_Id  = UserIdType("open_id")  //  用户的 open id
 	UserIdType_Union_Id = UserIdType("union_id") // 用户的 union id
 	UserIdType_UserId   = UserIdType("user_id")  // 用户的 user id
+	UserIdType_Email    = UserIdType("email")    // 邮箱
+	UserIdType_Chat_Id  = UserIdType("chat_id")  // 群聊ID
 )
 
 type BatchGetUserIdResponse struct {

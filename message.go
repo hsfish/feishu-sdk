@@ -3,10 +3,13 @@ package feishu_sdk
 import (
 	"fmt"
 	"reflect"
+
+	"github.com/hsfish/feishu-sdk/util/jsonUtil"
 )
 
 const (
-	api_Message_BatchSend = "https://open.feishu.cn/open-apis/message/v4/batch_send/"
+	api_Message_BatchSend_V4 = "https://open.feishu.cn/open-apis/message/v4/batch_send/"
+	api_Message_Send_V1      = "https://open.feishu.cn/open-apis/im/v1/messages"
 )
 
 const (
@@ -224,9 +227,38 @@ func (this *Sdk) SendMessageMulti(users *UserIdArgs, msg Message) (*SendMessageM
 		return nil, fmt.Errorf("暂不支持该类型：%s %s", reflect.TypeOf(msg).Name(), reflect.TypeOf(msg).Kind())
 	}
 
-	_, err := this.PostWithAuth(api_Message_BatchSend, nil, body, result)
+	_, err := this.PostWithAuth(api_Message_BatchSend_V4, nil, body, result)
 	if err != nil {
 		return nil, err
 	}
 	return result.Data.(*SendMessageMultiResult), nil
+}
+
+type SendMessageResult struct {
+	MessageId string `json:"message_id"`
+}
+
+func (this *Sdk) SendMessage(recvIdType UserIdType, recvId string, msg Message) (*SendMessageResult, error) {
+	result := &baseResultWithData{Data: &SendMessageResult{}}
+	body := map[string]interface{}{
+		"receive_id": recvId,
+		"msg_type":   msg.GetType(),
+	}
+	switch obj := msg.(type) {
+	case *PostMessage:
+		body["content"] = jsonUtil.MustMarshalToString(obj)
+	case MessageTypeContent:
+		body["content"] = jsonUtil.MustMarshalToString(obj.GetContent())
+	case MessageTypeCard:
+		body["content"] = jsonUtil.MustMarshalToString(obj.GetCard())
+	default:
+		return nil, fmt.Errorf("暂不支持该类型：%s %s", reflect.TypeOf(msg).Name(), reflect.TypeOf(msg).Kind())
+	}
+
+	if _, err := this.PostWithAuth(api_Message_Send_V1, map[string]interface{}{
+		"receive_id_type": recvIdType,
+	}, body, result); err != nil {
+		return nil, err
+	}
+	return result.Data.(*SendMessageResult), nil
 }
