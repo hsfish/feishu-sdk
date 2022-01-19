@@ -9,7 +9,7 @@ type AccessToken struct {
 	Expired     int64  `json:"expire"`
 }
 
-func (this *sdk) GenToken() (string, error) {
+func (this *Sdk) GenToken() (string, error) {
 
 	if token := tokenStorage.Get(this.appId); token != "" {
 		return token, nil
@@ -22,7 +22,7 @@ func (this *sdk) GenToken() (string, error) {
 	}
 }
 
-func (this *sdk) CreateToken() (*AccessToken, error) {
+func (this *Sdk) CreateToken() (*AccessToken, error) {
 	if t, err := this.provider.CreateToken(); err != nil {
 		return nil, err
 	} else {

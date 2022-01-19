@@ -211,7 +211,7 @@ type SendMessageMultiResult struct {
 	InvalidUserIds       []string `json:"invalid_user_ids"`
 }
 
-func (this *sdk) SendMessageMulti(users *UserIdArgs, msg Message) (*SendMessageMultiResult, error) {
+func (this *Sdk) SendMessageMulti(users *UserIdArgs, msg Message) (*SendMessageMultiResult, error) {
 	result := &baseResultWithData{Data: &SendMessageMultiResult{}}
 	body := users.GetData()
 	body["msg_type"] = msg.GetType()

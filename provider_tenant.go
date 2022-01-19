@@ -5,7 +5,7 @@ const (
 )
 
 type TenantProvider struct {
-	*sdk
+	*Sdk
 }
 
 func (this *TenantProvider) CreateToken() (*AccessToken, error) {

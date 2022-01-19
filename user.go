@@ -23,7 +23,7 @@ type UserIdDetail struct {
 	Email  string `json:"email"`   //邮箱，通过邮箱查询时返回
 }
 
-func (this *sdk) UserBatchGetId(emails []string, mobiles []string, idType ...UserIdType) (*BatchGetUserIdResponse, error) {
+func (this *Sdk) UserBatchGetId(emails []string, mobiles []string, idType ...UserIdType) (*BatchGetUserIdResponse, error) {
 	resp := &baseResultWithData{Data: &BatchGetUserIdResponse{}}
 
 	if _, err := this.PostWithAuth(api_User_Batch_Get_Id_V3, map[string]interface{}{

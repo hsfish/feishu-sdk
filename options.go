@@ -1,9 +1,9 @@
 package feishu_sdk
 
-type Options func(c *sdk)
+type Options func(c *Sdk)
 
 func WithTenantProvider() Options {
-	return func(c *sdk) {
-		c.provider = &TenantProvider{sdk: c}
+	return func(c *Sdk) {
+		c.provider = &TenantProvider{Sdk: c}
 	}
 }

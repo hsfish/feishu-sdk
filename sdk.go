@@ -23,15 +23,15 @@ func init() {
 	t.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 }
 
-type sdk struct {
+type Sdk struct {
 	appId       string
 	appSecret   string
 	provider    Provider
 	contentType string
 }
 
-func BuildSdk(appId, appSecret string, opts ...Options) *sdk {
-	c := &sdk{
+func BuildSdk(appId, appSecret string, opts ...Options) *Sdk {
+	c := &Sdk{
 		appId:       appId,
 		appSecret:   appSecret,
 		contentType: "application/json; charset=utf-8",
@@ -42,11 +42,11 @@ func BuildSdk(appId, appSecret string, opts ...Options) *sdk {
 	return c
 }
 
-func (this *sdk) GetAppId() string {
+func (this *Sdk) GetAppId() string {
 	return this.appId
 }
 
-func (this *sdk) formatRawQuery(rawQuery map[string]interface{}) string {
+func (this *Sdk) formatRawQuery(rawQuery map[string]interface{}) string {
 	rv := url.Values{}
 	for k, v := range rawQuery {
 		reflectVal := reflect.ValueOf(v)
@@ -65,11 +65,11 @@ func (this *sdk) formatRawQuery(rawQuery map[string]interface{}) string {
 	return rv.Encode()
 }
 
-func (this *sdk) Post(api string, body interface{}, r result) ([]byte, error) {
+func (this *Sdk) Post(api string, body interface{}, r result) ([]byte, error) {
 	return this.send(http.MethodPost, api, nil, body, r)
 }
 
-func (this *sdk) GetWithAuth(api string, rawQuery map[string]interface{}, body interface{}, r result) ([]byte, error) {
+func (this *Sdk) GetWithAuth(api string, rawQuery map[string]interface{}, body interface{}, r result) ([]byte, error) {
 	if len(rawQuery) > 0 {
 		if strings.Contains(api, "?") {
 			api += "&" + this.formatRawQuery(rawQuery)
@@ -84,7 +84,7 @@ func (this *sdk) GetWithAuth(api string, rawQuery map[string]interface{}, body i
 	return this.send(http.MethodGet, api, header, body, r)
 }
 
-func (this *sdk) PostWithAuth(api string, rawQuery map[string]interface{}, body interface{}, r result) ([]byte, error) {
+func (this *Sdk) PostWithAuth(api string, rawQuery map[string]interface{}, body interface{}, r result) ([]byte, error) {
 	if len(rawQuery) > 0 {
 		if strings.Contains(api, "?") {
 			api += "&" + this.formatRawQuery(rawQuery)
@@ -99,7 +99,7 @@ func (this *sdk) PostWithAuth(api string, rawQuery map[string]interface{}, body 
 	return this.send(http.MethodPost, api, header, body, r)
 }
 
-func (this *sdk) getTokenHeader() (map[string]string, error) {
+func (this *Sdk) getTokenHeader() (map[string]string, error) {
 
 	token, err := this.GenToken()
 	if err != nil {
@@ -108,7 +108,7 @@ func (this *sdk) getTokenHeader() (map[string]string, error) {
 	return map[string]string{"Authorization": "Bearer " + token}, nil
 }
 
-func (this *sdk) formatRequestBody(body interface{}) (io.Reader, error) {
+func (this *Sdk) formatRequestBody(body interface{}) (io.Reader, error) {
 	var reader io.Reader
 	if !reflect2.IsNil(body) {
 		switch d := body.(type) {
@@ -129,7 +129,7 @@ func (this *sdk) formatRequestBody(body interface{}) (io.Reader, error) {
 	return reader, nil
 }
 
-func (this *sdk) send(method string, api string, header map[string]string, body interface{}, r result) (buf []byte, err error) {
+func (this *Sdk) send(method string, api string, header map[string]string, body interface{}, r result) (buf []byte, err error) {
 	reqBody, err := this.formatRequestBody(body)
 	if err != nil {
 		return nil, err
