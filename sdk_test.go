@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"gitee.com/hsfish/feishu-sdk/util/jsonUtil"
+	"github.com/hsfish/feishu-sdk/util/jsonUtil"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -1,4 +1,4 @@
-module gitee.com/hsfish/feishu-sdk
+module github.com/hsfish/feishu-sdk
 
 go 1.15
 

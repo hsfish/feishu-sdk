@@ -3,7 +3,7 @@ package feishu_sdk
 import (
 	"testing"
 
-	"gitee.com/hsfish/feishu-sdk/util/jsonUtil"
+	"github.com/hsfish/feishu-sdk/util/jsonUtil"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -43,10 +43,8 @@ func (this a) GetType() string {
 	return ""
 }
 func TestSdk_SendMessageMulti_Invalid(t *testing.T) {
-	result, err := testSdk.SendMessageMulti(&UserIdArgs{
+	_, err := testSdk.SendMessageMulti(&UserIdArgs{
 		UserIds: []string{"a2fd43gd"},
 	}, a{})
-	if assert.NoError(t, err) {
-		t.Log(jsonUtil.MustMarshalToString(result))
-	}
+	assert.Error(t, err)
 }
