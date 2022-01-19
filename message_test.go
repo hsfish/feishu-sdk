@@ -1,9 +1,9 @@
 package feishu_sdk
 
 import (
-	"hsfish/feishu-sdk/util/jsonUtil"
 	"testing"
 
+	"gitee.com/hsfish/feishu-sdk/util/jsonUtil"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -1,10 +1,10 @@
 package feishu_sdk
 
 import (
-	"hsfish/feishu-sdk/util/jsonUtil"
 	"testing"
 	"time"
 
+	"gitee.com/hsfish/feishu-sdk/util/jsonUtil"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,7 +13,7 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
-var testSdk = BuildSdk("cli_a15c61d67038900b", "gdP9ucfwybXA9IGAXdiEIc60SzIDjPz3", WithTenantProvider())
+var testSdk = BuildSdk("", "", WithTenantProvider())
 
 func TestSdk_BatchGetUserId(t *testing.T) {
 	// a2fd43gd

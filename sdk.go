@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/tls"
 	"fmt"
-	"hsfish/feishu-sdk/util/jsonUtil"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -13,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"gitee.com/hsfish/feishu-sdk/util/jsonUtil"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/modern-go/reflect2"
 )
