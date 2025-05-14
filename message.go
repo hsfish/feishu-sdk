@@ -154,59 +154,6 @@ func (this PostMessageTag) AddImgTag(imageKey string, height, width int) PostMes
 	})
 }
 
-// 卡片消息
-type InteractiveMessage struct {
-	Config       *CardConfig     `json:"config,omitempty"`
-	CardLink     *CardElementUrl `json:"card_link,omitempty"`
-	Header       *CardHeader     `json:"header,omitempty"`
-	Elements     []interface{}   `json:"elements"`
-	I18nElements *I18nElement    `json:"i18n_elements,omitempty"`
-}
-
-func (this *InteractiveMessage) GetType() string {
-	return MessageType_Interactive
-}
-
-func (this *InteractiveMessage) GetCard() interface{} {
-	return this
-}
-
-type CardConfig struct {
-	WideScreenMode bool `json:"wide_screen_mode"`
-	EnableForward  bool `json:"enable_forward"`
-}
-
-type CardElementUrl struct {
-	Url        string `json:"url"`
-	AndroidUrl string `json:"android_url"`
-	IosUrl     string `json:"ios_url"`
-	PcUrl      string `json:"pc_url"`
-}
-
-type CardHeader struct {
-	Title    *CardHeaderTitle `json:"title,omitempty"`
-	Template string           `json:"template"`
-}
-
-type CardHeaderTitle struct {
-	Tag     string    `json:"tag"`
-	Content string    `json:"content"`
-	Lines   int       `json:"lines,omitempty"`
-	I18n    *CardI18n `json:"i18n,omitempty"`
-}
-
-type CardI18n struct {
-	ZhCn string `json:"zh_cn"`
-	EnUs string `json:"en_us"`
-	JaJp string `json:"ja_jp"`
-}
-
-type I18nElement struct {
-	ZhCn []interface{} `json:"zh_cn"`
-	EnUs []interface{} `json:"en_us"`
-	JaJp []interface{} `json:"ja_jp"`
-}
-
 type SendMessageMultiResult struct {
 	MessageId            string   `json:"message_id"`
 	InvalidDepartmentIds []string `json:"invalid_department_ids"`

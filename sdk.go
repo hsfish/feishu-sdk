@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"crypto/tls"
 	"fmt"
+	"github.com/hsfish/feishu-sdk/util/jsonUtil"
+	jsoniter "github.com/json-iterator/go"
+	"github.com/modern-go/reflect2"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -11,10 +14,6 @@ import (
 	"reflect"
 	"strings"
 	"time"
-
-	"github.com/hsfish/feishu-sdk/util/jsonUtil"
-	jsoniter "github.com/json-iterator/go"
-	"github.com/modern-go/reflect2"
 )
 
 func init() {

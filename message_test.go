@@ -73,3 +73,20 @@ func TestSdk_SendMessage_Post(t *testing.T) {
 		t.Log(result.MessageId)
 	}
 }
+
+func TestSdk_SendMessage_Interactive(t *testing.T) {
+
+	result, err := testSdk.SendMessage(UserIdType_Chat_Id, "oc_0413ff780d2c02e945cc671cb9562bd2",
+		NewSimpleInteractiveMessage("test", "testHahaHa"),
+	)
+	if assert.NoError(t, err) {
+		t.Log(result.MessageId)
+	}
+
+	result, err = testSdk.SendMessage(UserIdType_Chat_Id, "oc_0413ff780d2c02e945cc671cb9562bd2",
+		NewLinkInteractiveMessage("test", "testHahaHa", "https://www.baidu.com"),
+	)
+	if assert.NoError(t, err) {
+		t.Log(result.MessageId)
+	}
+}
